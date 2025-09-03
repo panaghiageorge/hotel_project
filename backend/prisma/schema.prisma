@@ -1,0 +1,151 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  admin
+  staff
+  client
+}
+
+enum ResStatus {
+  pending
+  confirmed
+  cancelled
+  no_show
+  checked_in
+  checked_out
+}
+
+enum PayStatus {
+  initiated
+  authorized
+  captured
+  refunded
+  failed
+  voided
+}
+
+model User {
+  id           BigInt   @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(client)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  Guest        Guest?
+}
+
+model Hotel {
+  id         BigInt     @id @default(autoincrement())
+  name       String
+  address    String?
+  city       String?
+  country    String?
+  timezone   String    @default("Europe/Bucharest")
+  createdAt  DateTime  @default(now())
+  roomTypes  RoomType[]
+  rooms      Room[]
+  reservations Reservation[]
+}
+
+model RoomType {
+  id               BigInt    @id @default(autoincrement())
+  hotelId          BigInt
+  hotel            Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  code             String
+  name             String
+  description      String?
+  capacityAdults   Int       @default(2)
+  capacityChildren Int       @default(0)
+  basePrice        Decimal
+  active           Boolean   @default(true)
+  rooms            Room[]
+  reservationRooms ReservationRoom[]
+  @@unique([hotelId, code])
+}
+
+model Room {
+  id         BigInt    @id @default(autoincrement())
+  hotelId    BigInt
+  roomTypeId BigInt
+  hotel      Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomType   RoomType  @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  roomNumber String
+  floor      Int?
+  active     Boolean   @default(true)
+  roomStays  RoomStay[]
+  reservationRooms ReservationRoom[]
+  @@unique([hotelId, roomNumber])
+}
+
+model Guest {
+  id           BigInt    @id @default(autoincrement())
+  userId       BigInt?  @unique
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  fullName     String
+  email        String?
+  phone        String?
+  reservations Reservation[]
+}
+
+model Reservation {
+  id         BigInt     @id @default(autoincrement())
+  hotelId    BigInt
+  hotel      Hotel      @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  guestId    BigInt?
+  guest      Guest?     @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  bookerEmail String?
+  bookerName  String?
+  checkIn     DateTime
+  checkOut    DateTime
+  status      ResStatus @default(confirmed)
+  currency    String    @default("EUR")
+  totalPrice  Decimal   @default(0)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  rooms       ReservationRoom[]
+  payments    Payment[]
+  roomStays   RoomStay[]
+}
+
+model ReservationRoom {
+  id             BigInt    @id @default(autoincrement())
+  reservationId  BigInt
+  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  roomId         BigInt
+  room           Room      @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  roomTypeId     BigInt
+  roomType       RoomType  @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  pricePerNight  Decimal
+  nights         Int
+  lineTotal      Decimal
+}
+
+model RoomStay {
+  id            BigInt    @id @default(autoincrement())
+  roomId        BigInt
+  reservationId BigInt
+  stayStart     DateTime
+  stayEnd       DateTime
+  room          Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  @@index([roomId])
+}
+
+model Payment {
+  id             BigInt    @id @default(autoincrement())
+  reservationId  BigInt
+  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  provider       String
+  providerTxn    String?
+  amount         Decimal
+  currency       String    @default("EUR")
+  status         PayStatus @default(initiated)
+  createdAt      DateTime  @default(now())
+}
