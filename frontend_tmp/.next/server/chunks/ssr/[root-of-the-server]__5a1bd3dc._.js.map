@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///D:/github/hotel_project/frontend/src/app/ApolloProvider.tsx"],"sourcesContent":["'use client'\r\nimport { ReactNode } from 'react'\r\n\r\nimport { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client'\r\nimport { ApolloProvider } from '@apollo/client/react'\r\n\r\nconst client = new ApolloClient({\r\n  link: new HttpLink({\r\n    uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:3001/graphql',\r\n  }),\r\n  cache: new InMemoryCache(),\r\n})\r\n\r\nexport default function ApolloWrapper({ children }: { children: ReactNode }) {\r\n  return <ApolloProvider client={client}>{children}</ApolloProvider>\r\n}\r\n"],"names":[],"mappings":";;;;;AAGA;AAAA;AAAA;AACA;AAJA;;;;AAMA,MAAM,SAAS,IAAI,0KAAY,CAAC;IAC9B,MAAM,IAAI,0KAAQ,CAAC;QACjB,KAAK,QAAQ,GAAG,CAAC,uBAAuB,IAAI;IAC9C;IACA,OAAO,IAAI,yLAAa;AAC1B;AAEe,SAAS,cAAc,EAAE,QAAQ,EAA2B;IACzE,qBAAO,8OAAC,0LAAc;QAAC,QAAQ;kBAAS;;;;;;AAC1C","debugId":null}}]
-}
